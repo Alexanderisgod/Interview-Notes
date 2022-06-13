@@ -15,3 +15,10 @@
 ​	IconVerticalSpacing，同上。
 
 4、修改后可能需要注销或重启才能生效。
+
+5、git修改代理：
+
+```text
+git config --global  --unset https.https://github.com.proxy 
+git config --global  --unset http.https://github.com.proxy 
+```
