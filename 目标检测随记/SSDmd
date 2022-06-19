@@ -1,0 +1,39 @@
+# SSD
+
+### Single Shot MultiBox Detector
+
+##### 1. SSD属于One-stage算法，MultiBox则指明其为多预测框。
+
+各种预测模型对比，如图1所示。![img](SSDmd.assets/v2-4c1d4d1b857a88b347549e54e15f322e_720w.jpg)
+
+##### 2.设计方式
+
+1. SSD和YOLO一样采用一个CNN提取feature map。==重点：大的特征图检测大目标，小的特征图检测小目标==
+
+   
+
+2. 采用了卷积层进行预测，而不是传统的FC
+
+   
+
+3. 设置先验框
+
+   YOLO中，每个单元预测多个边界框，但是都是相对于这个单元本身。YOLO在训练过程中需要自适应目标的形状，但SSD借鉴Faster R-CNN中的anchor理念，采用不同的aspect 和 scale ratio的先验框。
+
+   
+
+4. SSD网络结构，采用VGG16作为基础模型。如图2所示。
+
+   ![img](SSDmd.assets/v2-a43295a3e146008b2131b160eec09cd4_720w.jpg)
+
+   
+
+   采用VGG16做基础模型，首先VGG16是在ILSVRC CLS-LOC数据集预训练。然后借鉴了[DeepLab-LargeFOV](https://link.zhihu.com/?target=https%3A//export.arxiv.org/pdf/1606.00915)，分别将VGG16的全连接层fc6和fc7转换成 ![[公式]](https://www.zhihu.com/equation?tex=3%5Ctimes3) 卷积层 conv6和 ![[公式]](https://www.zhihu.com/equation?tex=1%5Ctimes1) 卷积层conv7，同时将池化层pool5由原来的stride=2的 ![[公式]](https://www.zhihu.com/equation?tex=2%5Ctimes+2) 变成stride=1的 ![[公式]](https://www.zhihu.com/equation?tex=3%5Ctimes+3) （猜想是不想reduce特征图大小），为了配合这种变化，采用了一种Atrous Algorithm，其实就是conv6采用扩展卷积或带孔卷积（[Dilation Conv](https://link.zhihu.com/?target=https%3A//arxiv.org/abs/1511.07122)），其在不增加参数与模型复杂度的条件下指数级扩大卷积的视野，其使用扩张率(dilation rate)参数，来表示扩张的大小，如下图6所示，(a)是普通的 ![[公式]](https://www.zhihu.com/equation?tex=3%5Ctimes3) 卷积，其视野就是 ![[公式]](https://www.zhihu.com/equation?tex=3%5Ctimes3) ，(b)是扩张率为2，此时视野变成 ![[公式]](https://www.zhihu.com/equation?tex=7%5Ctimes7) ，(c)扩张率为4时，视野扩大为 ![[公式]](https://www.zhihu.com/equation?tex=15%5Ctimes15) ，但是视野的特征更稀疏了。Conv6采用 ![[公式]](https://www.zhihu.com/equation?tex=3%5Ctimes3) 大小但dilation rate=6的扩展卷积。
+
+##### 3. 先验框匹配
+
+1. 对于图像中每个GT 找到最大IoU的先验框，设该先验框为正样本，若一个先验框没有与任何GT相交，则肯定是负样本。
+2. 对于剩下的先验框，若与某个GT 的 IoU大于 threshold(0.5)则是正样本，否则为负样本。
+
+
+
